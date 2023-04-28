@@ -8,10 +8,27 @@ trait Functions:
   def max(a: List[Int]): Int // gives Int.MinValue if a is empty
 
 object FunctionsImpl extends Functions:
-  override def sum(a: List[Double]): Double = ???
-  override def concat(a: Seq[String]): String = ???
-  override def max(a: List[Int]): Int = ???
 
+  import GivenCombines.given
+
+  override def sum(a: List[Double]): Double = combine(a)
+  override def concat(a: Seq[String]): String = combine(a)
+  override def max(a: List[Int]): Int = combine(a)
+  def combine[A: Combiner](s: Seq[A])(using c: Combiner[A]) : A =
+    s.foldLeft(c.unit)(c.combine)
+
+object GivenCombines:
+  given Combiner[Double] with
+    override def unit: Double = 0d
+    override def combine(a: Double, b: Double): Double = a + b
+
+  given Combiner[String] with
+    override def unit: String = ""
+    override def combine(a: String, b: String): String = a concat b
+
+  given Combiner[Int] with
+    override def unit: Int = Integer.MIN_VALUE
+    override def combine(a: Int, b: Int): Int = if a >= b then a else b
 /*
  * 2) To apply DRY principle at the best,
  * note the three methods in Functions do something similar.

@@ -1,5 +1,7 @@
 package u06lab.code
 
+import scala.runtime.Nothing$
+
 /** Consider the Parser example shown in previous lesson. Analogously to NonEmpty, create a mixin NotTwoConsecutive,
   * which adds the idea that one cannot parse two consecutive elements which are equal. Use it (as a mixin) to build
   * class NotTwoConsecutiveParser, used in the testing code at the end. Note we also test that the two mixins can work
@@ -12,7 +14,9 @@ abstract class Parser[T]:
   def parseAll(seq: Seq[T]): Boolean = (seq forall parse) & end // note &, not &&
 
 object Parsers:
-  val todo = ??? // put the extensions here..
+  extension (s: String)
+    def charParser: Parser[Char] = new BasicParser(s.toSet)
+
 class BasicParser(chars: Set[Char]) extends Parser[Char]:
   override def parse(t: Char): Boolean = chars.contains(t)
   override def end: Boolean = true
@@ -27,10 +31,25 @@ trait NonEmpty[T] extends Parser[T]:
 class NonEmptyParser(chars: Set[Char]) extends BasicParser(chars) with NonEmpty[Char]
 
 trait NotTwoConsecutive[T] extends Parser[T]:
-  val todo = ???
-// ???
+  private var last: T = _
+  private var consegutive = false
+  abstract override def parse(t: T): Boolean =
+    if !consegutive && last ==  t then
+      consegutive = true
+    last = t
+    super.parse(t)
+  abstract override def end: Boolean = super.end && !consegutive
 
-class NotTwoConsecutiveParser(chars: Set[Char]) extends BasicParser(chars) // with ????
+class NotTwoConsecutiveParser(chars: Set[Char]) extends BasicParser(chars) with NotTwoConsecutive[Char]
+
+trait ShortenThenN[T] (maxSize: Int) extends Parser[T]:
+  private var size = 0
+  abstract override def parse(t: T): Boolean =
+    size = size + 1
+    super.parse(t)
+  abstract override def end: Boolean = super.end && size <= maxSize
+
+class ShortenThenNParser(chars: Set[Char], maxSize: Int) extends BasicParser(chars) with ShortenThenN[Char](maxSize)
 
 @main def checkParsers(): Unit =
   def parser = new BasicParser(Set('a', 'b', 'c'))
@@ -50,13 +69,19 @@ class NotTwoConsecutiveParser(chars: Set[Char]) extends BasicParser(chars) // wi
   println(parserNTC.parseAll("XYYZ".toList)) // false
   println(parserNTC.parseAll("".toList)) // true
 
-  // note we do not need a class name here, we use the structural type
+  //note we do not need a class name here, we use the structural type
   def parserNTCNE = new BasicParser(Set('X', 'Y', 'Z')) with NotTwoConsecutive[Char] with NonEmpty[Char]
   println(parserNTCNE.parseAll("XYZ".toList)) // true
   println(parserNTCNE.parseAll("XYYZ".toList)) // false
   println(parserNTCNE.parseAll("".toList)) // false
 
-  def sparser: Parser[Char] = ??? // "abc".charParser()
+  import u06lab.code.Parsers.charParser
+  def sparser: Parser[Char] = "abc".charParser
   println(sparser.parseAll("aabc".toList)) // true
   println(sparser.parseAll("aabcdc".toList)) // false
   println(sparser.parseAll("".toList)) // true
+
+  def parserShortenThenN = new ShortenThenNParser(Set('X', 'Y', 'Z'), 3)
+  println(parserNTC.parseAll("XYZ".toList)) // true
+  println(parserNTC.parseAll("XYYZ".toList)) // false
+  println(parserNTC.parseAll("X".toList)) // true
