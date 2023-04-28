@@ -57,7 +57,6 @@ object Solitaire extends App:
 //    yield
 //      j
 //
-//
 //    def searchSolutions(c: Int)(l: IndexedSeq[Int]) : Iterable[Solution] = l.size match
 //      case 1 =>
 //        if (for i <- movements yield c + i) contains l.head then

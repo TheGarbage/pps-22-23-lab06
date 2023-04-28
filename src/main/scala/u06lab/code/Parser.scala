@@ -13,6 +13,7 @@ abstract class Parser[T]:
   def end: Boolean // is it ok to end here
   def parseAll(seq: Seq[T]): Boolean = (seq forall parse) & end // note &, not &&
 
+// Task 2
 object Parsers:
   extension (s: String)
     def charParser: Parser[Char] = new BasicParser(s.toSet)
@@ -28,6 +29,7 @@ trait NonEmpty[T] extends Parser[T]:
     super.parse(t) // who is super??
   abstract override def end: Boolean = !empty && super.end
 
+// Task 1
 class NonEmptyParser(chars: Set[Char]) extends BasicParser(chars) with NonEmpty[Char]
 
 trait NotTwoConsecutive[T] extends Parser[T]:
@@ -42,6 +44,7 @@ trait NotTwoConsecutive[T] extends Parser[T]:
 
 class NotTwoConsecutiveParser(chars: Set[Char]) extends BasicParser(chars) with NotTwoConsecutive[Char]
 
+// Task 3 (optional)
 trait ShortenThenN[T] (maxSize: Int) extends Parser[T]:
   private var size = 0
   abstract override def parse(t: T): Boolean =
